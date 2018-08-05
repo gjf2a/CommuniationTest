@@ -16,6 +16,7 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
     private TextView numSends, message2send, statusBox, timeBox, responseBox;
 
     private int sendsRemaining = 0;
+    private long sendStart = 0;
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -45,8 +46,13 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
         }
     }
 
+    public void clearResponses(View view) {
+        responseBox.setText("Responses:");
+    }
+
     public void send(View view) {
         sendsRemaining = Integer.parseInt(numSends.getText().toString());
+        sendStart = System.currentTimeMillis();
         sendHelp();
     }
 
@@ -66,7 +72,6 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
         runOnUiThread(new Runnable() {public void run() {
             statusBox.setText(stat);
             Log.i(TAG, "status box set");
-            //message2send.setText("");
         }});
         Log.i(TAG, "cleared message box; calling receive");
         talker.receive();
@@ -87,6 +92,11 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
                 statusBox.setText(talker.getStatusMessage());
                 if (sendsRemaining > 0) {
                     sendHelp();
+                } else {
+                    message2send.setText(""); 
+                    long sendDuration = System.currentTimeMillis() - sendStart;
+                    String durationMsg = String.format("Time: %8.4fs", sendDuration / 1000.0);
+                    timeBox.setText(durationMsg);
                 }
             }
         });
