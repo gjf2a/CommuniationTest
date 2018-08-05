@@ -205,11 +205,23 @@ public class ArduinoTalker {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    int result = transfer(host2Device, bytes, "Send");
+                    int bytesSent = 0;
+                    int loops = 0;
+                    while (bytesSent == 0) {
+                        Log.i(TAG, "Attempting send");
+                        bytesSent = transfer(host2Device, bytes, "Send");
+                        Log.i(TAG, bytesSent + " bytes sent");
+                        loops += 1;
+                        if (bytesSent == 0) {
+                            Log.i(TAG, "Loop " + loops + "; Sleeping for a moment...");
+                            Thread.sleep(10000);
+                        }
+                        if (loops > 100) {System.exit(1);}
+                    }
                     Log.i(TAG, "Send complete");
                     for (TalkerListener listener : listeners) {
                         Log.i(TAG, "Notifying listener");
-                        listener.sendComplete(result);
+                        listener.sendComplete(bytesSent);
                         Log.i(TAG, "Notification complete");
                     }
                     statusMessage = "Message sent";

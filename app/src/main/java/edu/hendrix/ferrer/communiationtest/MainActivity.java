@@ -15,6 +15,8 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
     private ArduinoTalker talker;
     private TextView numSends, message2send, statusBox, timeBox, responseBox;
 
+    private int sendsRemaining = 0;
+
     private static final String TAG = MainActivity.class.getSimpleName();
 
     @Override
@@ -44,10 +46,16 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
     }
 
     public void send(View view) {
+        sendsRemaining = Integer.parseInt(numSends.getText().toString());
+        sendHelp();
+    }
+
+    private void sendHelp() {
         byte[] bytes = message2send.getText().toString().getBytes(Charset.forName("UTF-8"));
         Log.i(TAG, "Starting send");
         talker.send(bytes);
-        Log.i(TAG, "Send called");
+        sendsRemaining -= 1;
+        Log.i(TAG, "Send called; " + sendsRemaining + " left.");
     }
 
     @Override
@@ -58,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
         runOnUiThread(new Runnable() {public void run() {
             statusBox.setText(stat);
             Log.i(TAG, "status box set");
-            message2send.setText("");
+            //message2send.setText("");
         }});
         Log.i(TAG, "cleared message box; calling receive");
         talker.receive();
@@ -77,6 +85,9 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
             public void run() {
                 responseBox.setText(responseBox.getText() + "\n" + backStr);
                 statusBox.setText(talker.getStatusMessage());
+                if (sendsRemaining > 0) {
+                    sendHelp();
+                }
             }
         });
     }
