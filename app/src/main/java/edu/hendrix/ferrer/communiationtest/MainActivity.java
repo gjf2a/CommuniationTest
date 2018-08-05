@@ -15,8 +15,6 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
     private ArduinoTalker talker;
     private TextView numSends, message2send, statusBox, timeBox, responseBox;
 
-    private int numResponsesExpected = 0;
-
     private static final String TAG = MainActivity.class.getSimpleName();
 
     @Override
@@ -47,8 +45,7 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
 
     public void send(View view) {
         byte[] bytes = message2send.getText().toString().getBytes(Charset.forName("UTF-8"));
-        numResponsesExpected = bytes.length;
-        Log.i(TAG, "Starting send; " + numResponsesExpected + " responses expected");
+        Log.i(TAG, "Starting send");
         talker.send(bytes);
         Log.i(TAG, "Send called");
     }
@@ -69,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
     }
 
     @Override
-    public void receiveComplete(int status, byte[] received) {
+    public void receiveComplete(byte[] received) {
         StringBuilder back = new StringBuilder();
         for (int i = 0; i < received.length; i++) {
             back.append((char)received[i]);
@@ -82,12 +79,6 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
                 statusBox.setText(talker.getStatusMessage());
             }
         });
-
-        numResponsesExpected -= 1;
-        Log.i(TAG, "Remaining responses expected: " + numResponsesExpected);
-        if (numResponsesExpected > 0) {
-            talker.receive();
-        }
     }
 
     @Override

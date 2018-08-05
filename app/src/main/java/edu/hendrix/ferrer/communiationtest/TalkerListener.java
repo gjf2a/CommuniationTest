@@ -6,6 +6,6 @@ package edu.hendrix.ferrer.communiationtest;
 
 public interface TalkerListener {
     public void sendComplete(int status);
-    public void receiveComplete(int status, byte[] received);
+    public void receiveComplete(byte[] received);
     public void error();
 }

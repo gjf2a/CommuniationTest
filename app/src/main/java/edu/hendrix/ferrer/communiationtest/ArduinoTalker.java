@@ -225,12 +225,24 @@ public class ArduinoTalker {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    Log.i(TAG, "Starting receive");
+                    int totalReceived = 0;
                     byte[] received = new byte[INCOMING_SIZE];
-                    int result = transfer(device2Host, received, "Receive");
-                    Log.i(TAG,"Receive complete");
+                    byte[] buffer = new byte[INCOMING_SIZE];
+                    while (totalReceived < received.length) {
+                        Log.i(TAG, "Starting receive");
+                        int result = transfer(device2Host, buffer, "Receive");
+                        if (result > 0) {
+                            for (int i = 0; i < result; i++) {
+                                received[totalReceived] = buffer[i];
+                                totalReceived += 1;
+                            }
+                            Log.i(TAG, "Received " + totalReceived + "/" + received.length);
+                        } else {
+                            Log.i(TAG, "Trouble with receive: code " + result);
+                        }
+                    }
                     for (TalkerListener listener : listeners) {
-                        listener.receiveComplete(result, received);
+                        listener.receiveComplete(received);
                     }
                     statusMessage = "Message received";
                     Log.i(TAG,"Receive notifications complete");
