@@ -26,8 +26,6 @@ public class ArduinoTalker {
     private String statusMessage = "ok";
     private ArrayList<TalkerListener> listeners = new ArrayList<>();
 
-    public static final int INCOMING_SIZE = 5;
-
     private static final String TAG = ArduinoTalker.class.getSimpleName();
 
     // From https://github.com/felHR85/UsbSerial/blob/master/usbserial/src/main/java/com/felhr/usbserial/CDCSerialDevice.java
@@ -231,11 +229,11 @@ public class ArduinoTalker {
         Log.i(TAG, "Send notifications complete");
     }
 
-    public void receive() {
+    public void receive(final int numBytesExpected) {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    BufferedTalker receivedData = performReceive();
+                    BufferedTalker receivedData = performReceive(numBytesExpected);
                     notifyReceive(receivedData);
                 } catch (Exception exc) {
                     statusMessage = "Error receiving: " + exc.getMessage();
@@ -244,9 +242,9 @@ public class ArduinoTalker {
         }).start();
     }
 
-    private BufferedTalker performReceive() {
-        BufferedTalker receivedData = new BufferedTalker(INCOMING_SIZE);
-        byte[] buffer = new byte[INCOMING_SIZE];
+    private BufferedTalker performReceive(final int numBytesExpected) {
+        BufferedTalker receivedData = new BufferedTalker(numBytesExpected);
+        byte[] buffer = new byte[numBytesExpected];
         while (!receivedData.finished()) {
             int bytesReceived = transfer(device2Host, buffer, "Receive");
             receivedData.updateWith(bytesReceived, buffer);

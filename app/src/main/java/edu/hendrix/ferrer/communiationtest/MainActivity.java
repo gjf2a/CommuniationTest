@@ -20,6 +20,8 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private static final int MESSAGE_SIZE = 5;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,13 +53,13 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
     }
 
     public void send(View view) {
-        if (message2send.getText().toString().length() == ArduinoTalker.INCOMING_SIZE) {
+        if (message2send.getText().toString().length() == MESSAGE_SIZE) {
             responseBox.setText("Responses:");
             sendsRemaining = Integer.parseInt(numSends.getText().toString());
             sendStart = System.currentTimeMillis();
             sendHelp();
         } else {
-            statusBox.setText("Message must be " + ArduinoTalker.INCOMING_SIZE + " characters");
+            statusBox.setText("Message must be " + MESSAGE_SIZE + " characters");
         }
     }
 
@@ -79,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
             Log.i(TAG, "status box set");
         }});
         Log.i(TAG, "calling receive");
-        talker.receive();
+        talker.receive(message2send.getText().length());
         Log.i(TAG, "returned from receive");
     }
 
