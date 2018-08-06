@@ -26,7 +26,7 @@ public class ArduinoTalker {
     private String statusMessage = "ok";
     private ArrayList<TalkerListener> listeners = new ArrayList<>();
 
-    private static final int INCOMING_SIZE = 5;
+    public static final int INCOMING_SIZE = 5;
 
     private static final String TAG = ArduinoTalker.class.getSimpleName();
 
@@ -205,15 +205,8 @@ public class ArduinoTalker {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    int bytesSent = 0;
-                    Log.i(TAG, "Attempting send");
-                    bytesSent = transfer(host2Device, bytes, "Send");
-                    Log.i(TAG, "Send complete; " + bytesSent + " bytes sent");
-                    for (TalkerListener listener : listeners) {
-                        listener.sendComplete(bytesSent);
-                    }
-                    statusMessage = "Message sent";
-                    Log.i(TAG, "Send notifications complete");
+                    int bytesSent = performSend(bytes);
+                    notifySend(bytesSent);
                 } catch (Exception exc) {
                     statusMessage = "Error sending: " + exc.getMessage();
                     Log.i(TAG,"Exception sending: " + exc.getMessage());
@@ -222,35 +215,50 @@ public class ArduinoTalker {
         }).start();
     }
 
+    private int performSend(final byte[] bytes) {
+        int bytesSent = 0;
+        Log.i(TAG, "Attempting send");
+        bytesSent = transfer(host2Device, bytes, "Send");
+        Log.i(TAG, "Send complete; " + bytesSent + " bytes sent");
+        return bytesSent;
+    }
+
+    private void notifySend(int bytesSent) {
+        for (TalkerListener listener : listeners) {
+            listener.sendComplete(bytesSent);
+        }
+        statusMessage = "Message sent";
+        Log.i(TAG, "Send notifications complete");
+    }
+
     public void receive() {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    int totalReceived = 0;
-                    byte[] received = new byte[INCOMING_SIZE];
-                    byte[] buffer = new byte[INCOMING_SIZE];
-                    while (totalReceived < received.length) {
-                        Log.i(TAG, "Starting receive");
-                        int bytesReceived = transfer(device2Host, buffer, "Receive");
-                        if (bytesReceived > 0) {
-                            for (int i = 0; i < bytesReceived; i++) {
-                                received[totalReceived] = buffer[i];
-                                totalReceived += 1;
-                            }
-                            Log.i(TAG, "Received " + totalReceived + "/" + received.length);
-                        } else {
-                            Log.i(TAG, "Trouble with receive: code " + bytesReceived);
-                        }
-                    }
-                    for (TalkerListener listener : listeners) {
-                        listener.receiveComplete(received);
-                    }
-                    statusMessage = "Message received";
-                    Log.i(TAG,"Receive notifications complete");
+                    BufferedTalker receivedData = performReceive();
+                    notifyReceive(receivedData);
                 } catch (Exception exc) {
                     statusMessage = "Error receiving: " + exc.getMessage();
                 }
             }
         }).start();
+    }
+
+    private BufferedTalker performReceive() {
+        BufferedTalker receivedData = new BufferedTalker(INCOMING_SIZE);
+        byte[] buffer = new byte[INCOMING_SIZE];
+        while (!receivedData.finished()) {
+            int bytesReceived = transfer(device2Host, buffer, "Receive");
+            receivedData.updateWith(bytesReceived, buffer);
+        }
+        return receivedData;
+    }
+
+    private void notifyReceive(BufferedTalker receivedData) {
+        for (TalkerListener listener : listeners) {
+            listener.receiveComplete(receivedData.getReceived());
+        }
+        statusMessage = "Message received";
+        Log.i(TAG,"Receive notifications complete");
     }
 }

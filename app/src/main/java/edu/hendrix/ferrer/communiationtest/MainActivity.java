@@ -51,9 +51,14 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
     }
 
     public void send(View view) {
-        sendsRemaining = Integer.parseInt(numSends.getText().toString());
-        sendStart = System.currentTimeMillis();
-        sendHelp();
+        if (message2send.getText().toString().length() == ArduinoTalker.INCOMING_SIZE) {
+            responseBox.setText("Responses:");
+            sendsRemaining = Integer.parseInt(numSends.getText().toString());
+            sendStart = System.currentTimeMillis();
+            sendHelp();
+        } else {
+            statusBox.setText("Message must be " + ArduinoTalker.INCOMING_SIZE + " characters");
+        }
     }
 
     private void sendHelp() {
@@ -73,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
             statusBox.setText(stat);
             Log.i(TAG, "status box set");
         }});
-        Log.i(TAG, "cleared message box; calling receive");
+        Log.i(TAG, "calling receive");
         talker.receive();
         Log.i(TAG, "returned from receive");
     }
@@ -85,21 +90,25 @@ public class MainActivity extends AppCompatActivity implements TalkerListener {
             back.append((char)received[i]);
         }
         final String backStr = back.toString();
-        Log.i(TAG, "Received: " + back);
+        Log.i(TAG, "Received: " + backStr);
         runOnUiThread(new Runnable() {
             public void run() {
-                responseBox.setText(responseBox.getText() + "\n" + backStr);
-                statusBox.setText(talker.getStatusMessage());
-                if (sendsRemaining > 0) {
-                    sendHelp();
-                } else {
-                    message2send.setText(""); 
-                    long sendDuration = System.currentTimeMillis() - sendStart;
-                    String durationMsg = String.format("Time: %8.4fs", sendDuration / 1000.0);
-                    timeBox.setText(durationMsg);
-                }
+                processResponseCompletion(backStr);
             }
         });
+    }
+
+    private void processResponseCompletion(String backStr) {
+        responseBox.setText(responseBox.getText() + "\n" + backStr);
+        statusBox.setText(talker.getStatusMessage());
+        if (sendsRemaining > 0) {
+            sendHelp();
+        } else {
+            message2send.setText("");
+            long sendDuration = System.currentTimeMillis() - sendStart;
+            String durationMsg = String.format("Time: %8.4fs", sendDuration / 1000.0);
+            timeBox.setText(durationMsg);
+        }
     }
 
     @Override
